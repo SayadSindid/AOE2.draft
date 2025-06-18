@@ -1,0 +1,24 @@
+{
+	"name": "aoe2_draft_discord_bot",
+	"version": "1.0.0",
+	"main": "index.js",
+	"type": "module",
+	"scripts": {
+		"build": "npx tsc",
+		"start": "tsx src/bot.ts",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"description": "",
+	"dependencies": {
+		"discord.js": "^14.20.0",
+		"dotenv": "^16.5.0"
+	},
+	"devDependencies": {
+		"@types/node": "^24.0.3",
+		"tsx": "^4.20.3",
+		"typescript": "^5.8.3"
+	}
+}
