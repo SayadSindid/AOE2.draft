@@ -1,33 +1,52 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
-import { civilizations } from "./data.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { civilizations, bannedOrPickedCivString } from "./data.js";
+import type { PageNumber } from "../index.js";
+import { createNewRow } from "./utilities.js";
 
+// Button test example
+// export const byzantins = new ButtonBuilder()
+//     .setCustomId("Byzantins")
+//     .setLabel("Byzantins")
+//     .setEmoji("<:byzantines:1385266598796988569>")
+//     .setStyle(ButtonStyle.Primary)
 
-export const byzantins = new ButtonBuilder()
-    .setCustomId("Byzantins")
-    .setLabel("Byzantins")
-    .setEmoji("<:byzantines:1385266598796988569>")
+const previousButton = new ButtonBuilder()
+    .setCustomId("Previous")
+    .setLabel("Previous")
+    .setEmoji("⬅️")
+    .setStyle(ButtonStyle.Primary)
+
+const nextButton = new ButtonBuilder()
+    .setCustomId("Next")
+    .setLabel("Next")
+    .setEmoji("➡️")
     .setStyle(ButtonStyle.Primary)
 
 
-// FIXME: Either settle with buttons or go the context menu
-function createAllButtons() {
+function createAllButtonsCiv(buttonToDisable: string = "") {
 
     let arr = []
 
     for (let i = 0; i < civilizations.length; i++) {
+        // CHeck if a civ is among banned or picked civ 
+        if (bannedOrPickedCivString.includes(civilizations[i])) {
+            continue;
+        }
         let newButtonComponent = new ButtonBuilder()
             .setCustomId(civilizations[i])
             .setLabel(civilizations[i])
-            .setStyle(ButtonStyle.Primary)
+            .setStyle(ButtonStyle.Secondary)
             arr.push(newButtonComponent)
+        // Disable the selectioned civ button and store it's name for checking purpose
+        if (buttonToDisable === civilizations[i]) {
+            bannedOrPickedCivString.push(civilizations[i])
+        }
     }
 
     return arr;
 }
 
-const allButtonsCiv = createAllButtons();
-
-function createAllRows(buttons: ButtonBuilder[]) {
+function createAllRowsCiv(buttons: ButtonBuilder[]) {
     let arr = []
     let newRow = new ActionRowBuilder<ButtonBuilder>()
 
@@ -39,35 +58,24 @@ function createAllRows(buttons: ButtonBuilder[]) {
         newRow.addComponents(buttons[i])
         
     }
-
+    arr.push(newRow)
     return arr;
 }
 
+// FIXME: Find a solution, when deleting multiples buttons the last page will be empty.
+export function buttonStatePage(pageNumber: PageNumber, buttonToDisable: string = "") {
 
-const selectMenu = new StringSelectMenuBuilder()
-    .setCustomId("Starter")
-    .setPlaceholder("Make a selection")
-    .addOptions(
-        new StringSelectMenuOptionBuilder()
-            .setLabel("Britanniques")
-            .setDescription("représentant l'Angleterre médiévale et les Anglo-normands.")
-            .setValue("Britanniques")
-            .setEmoji("1385299735895867513"),
-        new StringSelectMenuOptionBuilder()
-            .setLabel("Byzantins")
-            .setDescription("based on the empire of the namesake around modern day Greece and Turkey.")
-            .setValue("Byzantins")
-            .setEmoji("1385266598796988569"),
-        new StringSelectMenuOptionBuilder()
-            .setLabel("Celtes")
-            .setDescription("inspirée de l'Irlande et de l'Écosse médiévales")
-            .setValue("Celtes")
-            .setEmoji("1385314825348976650"),
-    )
-
-
-// Row only have between 1 to 5 component max
-// Row can only have 1 Interactive component so you usally inherit the type from the intercative component you are planning to use
-export const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>()
-// Creation of a new component button, just add new object to the component array
-    .addComponents(selectMenu)
+    if (pageNumber === 1) {
+        return [
+            // It's a bit disgusting but I don't have much choice if I wanna change the state of a button to disabled
+            ...createAllRowsCiv(createAllButtonsCiv(buttonToDisable)).slice(0,4), createNewRow(nextButton)
+        ]
+        
+    } else if (pageNumber === 2) {
+        return [...createAllRowsCiv(createAllButtonsCiv(buttonToDisable)).slice(5,9), createNewRow(previousButton, nextButton)]
+    } else if (pageNumber === 3) {
+        return [...createAllRowsCiv(createAllButtonsCiv(buttonToDisable)).slice(10), createNewRow(previousButton)]
+    } else {
+        throw new Error("Unrecognized page number");
+    }
+}

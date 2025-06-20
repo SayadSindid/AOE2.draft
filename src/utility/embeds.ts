@@ -6,21 +6,21 @@ export const embed = new EmbedBuilder()
     name: "⚔️ DRAFT ⚔️",
   })
   .setTitle("🟧 Player 1")
-  .setDescription("🟠 @Player 1 ban a civilization!\n⌛{Time_Remaining} remaining !\n​") // Special character to jump line
+  .setDescription("🟠 Player 1 ban a civilization!\n") // Special character to jump line
   .addFields(
     {
       name: "🚫BANS",
-      value: "{List_of_Ban_Done_Until_Now}\n​", // Special character to jump line
+      value: "", // Special character to jump line
       inline: false
     },
     {
       name: "🟧 Player 1 Pick",
-      value: "{List_Of_Pick_Until_Now}\n​", // Special character to jump line
+      value: "", // Special character to jump line
       inline: false
     },
     {
       name: "🟦 Player 2 Pick",
-      value: "{List_Of_Pick_Until_Now}\n​", // Special character to jump line
+      value: "", // Special character to jump line
       inline: false
     },
     {

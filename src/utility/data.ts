@@ -1,5 +1,7 @@
 
 // List of civ
+// FIXME: Cange the data structure in order to put the emoji id for every civ
+// Probably an array of object
 export const civilizations = [
     // The Age of Kings
     "Britanniques",
@@ -74,5 +76,12 @@ export const civilizations = [
     "Khitan",
     "Shu",
     "Wei",
-    "Wu"
+    "Wu",
+
+    // Battle for greece
+    "Achéménides",
+    "Athéniens",
+    "Spartiates"
 ];
+
+export let bannedOrPickedCivString: string[] = [];
