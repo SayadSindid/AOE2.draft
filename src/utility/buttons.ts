@@ -3,12 +3,6 @@ import { civilizations, bannedOrPickedCivString } from "./data.js";
 import type { PageNumber } from "../index.js";
 import { createNewRow } from "./utilities.js";
 
-// Button test example
-// export const byzantins = new ButtonBuilder()
-//     .setCustomId("Byzantins")
-//     .setLabel("Byzantins")
-//     .setEmoji("<:byzantines:1385266598796988569>")
-//     .setStyle(ButtonStyle.Primary)
 
 const previousButton = new ButtonBuilder()
     .setCustomId("Previous")
@@ -68,6 +62,7 @@ export function buttonStatePage(pageNumber: PageNumber, buttonToDisable: string 
     if (pageNumber === 1) {
         return [
             // It's a bit disgusting but I don't have much choice if I wanna change the state of a button to disabled
+            // Create all buttons -> Create all row for the buttons -> Split and spread the first 4 Row => make a new row with the prev button
             ...createAllRowsCiv(createAllButtonsCiv(buttonToDisable)).slice(0,4), createNewRow(nextButton)
         ]
         

@@ -1,9 +1,9 @@
 import 'dotenv/config'
-import { Client, Events, GatewayIntentBits } from "discord.js";
+import { Client, Events, GatewayIntentBits, InteractionCollector } from "discord.js";
 import { embed } from "./utility/embeds.js";
 import { buttonStatePage } from './utility/buttons.js';
 import type { DraftSelection, PageNumber } from './index.js';
-import { embedReload, messageEdit, pageChange } from './utility/utilities.js';
+import { embedInitialState, embedReload, messageEdit, pageChange } from './utility/utilities.js';
 import { civilizations } from './utility/data.js';
 
 
@@ -18,11 +18,8 @@ const client = new Client({ intents: [
 ],
 });
 
-
-// TODO: Implement proper program ending and force reset
-
-// DRAFT LOGIC
 let isDraftActive: boolean = false;
+// DRAFT COURSE
 const draftState: string[] = [
     "🟠 Player 1 Ban",
     "🔵 Player 2 Ban",
@@ -42,16 +39,18 @@ const draftState: string[] = [
     "🔵 Player 2 Pick",
 
 ]; 
-// Step draft state incrementer or decrementer if the user wanna go back a state in the draft
+// DRAFT STEP
 let currentStep: number = 0;
-let draftSelection: DraftSelection = {
+// DRAFT DATA OBJECT
+export let draftSelection: DraftSelection = {
     PlayerOnePicks: [],
     PlayerTwoPicks: [],
     Bans: [],
 }
 // BUTTONS PAGE LOGIC
 let currentPageNumber: PageNumber = 1;
-
+// Intializing the collector in global scope for the purpose of stopping the draft
+let collector: InteractionCollector<any>;
 // When the client is ready, run this code (only once).
 client.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
@@ -62,18 +61,18 @@ client.on("messageCreate", async function(msg) {
         if(isDraftActive) {
             msg.reply("A draft is already launched.\n Please either finish it or abandon it.")
         } else {
-            // TODO: Error handling when click on previous or next and it lead to OOB
+            isDraftActive = true;
             const interaction = await msg.reply({ 
                 embeds: [embed],
                 components: buttonStatePage(currentPageNumber),
             });
 
-            // Timeout of around 10 minutes
-            const collector = interaction.channel.createMessageComponentCollector({time: 999999999});
-
+            // Huge timeout to not make the draft expire
+            // The collector is like a data structure that stock all the informations related to the interaction with the interactive components
+            collector = interaction.channel.createMessageComponentCollector({time: 999999999});
+            
             collector.on("collect", async function(obj) {
-
-                console.log(`Interaction : ${obj.customId} and ${obj.user.id}`);
+                obj.deferUpdate();
                 if (obj.user.id !== msg.author.id) {
                     return await obj.reply({content: "This draft isn't made by you", ephemeral: true})
                 }
@@ -86,47 +85,70 @@ client.on("messageCreate", async function(msg) {
                         currentPageNumber = pageChange(currentPageNumber, "Previous");
                     }
                     await messageEdit(obj.message, currentPageNumber, embed)
-                    obj.deferUpdate()
                 }
-                
+                // Button = A civ
                 if (civilizations.includes(obj.customId)) {
-                    // TODO: Do a reload just after the user clicked in order not to be able to reclick a civ that have been banned or picked
                     if (draftState[currentStep].includes("Ban")) {
-                        currentStep++
+                        // Ban
+                        // Reload message just after a civ has been clicked to remove the choice
+                        await messageEdit(obj.message, currentPageNumber, embed, obj.customId)
                         draftSelection.Bans.push(obj.customId);
+                        currentStep++
+                        // Reload embed and message for new state
                         embedReload(embed, draftSelection, draftState, currentStep)
                         await messageEdit(obj.message, currentPageNumber, embed, obj.customId)
-                        obj.deferUpdate()
                     } else if (draftState[currentStep].includes("Pick")) {
                         if (draftState[currentStep].includes("1")) {
-                            currentStep++
+                            // Player 1
+                            await messageEdit(obj.message, currentPageNumber, embed, obj.customId)
                             draftSelection.PlayerOnePicks.push(obj.customId)
-                            embedReload(embed, draftSelection, draftState, currentStep)
-                            await messageEdit(obj.message, currentPageNumber, embed, obj.customId)
-                            obj.deferUpdate()
-                        } else {
                             currentStep++
-                            draftSelection.PlayerTwoPicks.push(obj.customId)
                             embedReload(embed, draftSelection, draftState, currentStep)
                             await messageEdit(obj.message, currentPageNumber, embed, obj.customId)
-                            obj.deferUpdate()
+                        } else {
+                            // Player 2
+                            await messageEdit(obj.message, currentPageNumber, embed, obj.customId)
+                            draftSelection.PlayerTwoPicks.push(obj.customId)
+                            currentStep++
+                            embedReload(embed, draftSelection, draftState, currentStep)
+                            await messageEdit(obj.message, currentPageNumber, embed, obj.customId)
                         }
-                        // TODO: Stop the draft
-                        // if (draftState[currentStep] === undefined) {
-                            
-                        // }
+                        // Draft Stop
+                        if (draftState[currentStep] === undefined) {
+                            embedReload(embed, draftSelection, draftState, currentStep)
+                            await messageEdit(obj.message, currentPageNumber, embed, obj.customId, false)
+                            resetAllValues();
+                            collector.stop()
+                            return;
+                        }
                     }
                 }
-
             })
-            
-
-
         }
     } else if (msg.content === "!gg") {
         msg.reply("noob")
+    } else if (msg.content === "!draftstop") {
+        // Stop the collector in order to not have some interactions problem.
+        collector.stop();
+        msg.reply("The draft has been stopped\n You can type !draft to launch a new one.")
+        resetAllValues();
     }
 })
+
+// State reset of the draft
+function resetAllValues(): void {
+    
+    currentStep = 0;
+    draftSelection.PlayerOnePicks =  [];
+    draftSelection.PlayerTwoPicks = [];
+    draftSelection.Bans = [];
+    currentPageNumber = 1;
+    isDraftActive = false;
+    embed.spliceFields(0, embed.length - 1)
+    embedInitialState(embed);
+    
+    return;
+}
 
 
 // Log in to Discord with your client's token
