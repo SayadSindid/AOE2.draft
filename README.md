@@ -1,4 +1,4 @@
-# AOE2 Drafter discord bot
+# AOE.draft
 
 A discord bot to make draft for the game Age of Empire 2.
 
