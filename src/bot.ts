@@ -5,6 +5,20 @@ import { buttonStatePage } from './utility/buttons.js';
 import type { DraftSelection, PageNumber } from './index.js';
 import { embedInitialState, embedReload, messageEdit, pageChange } from './utility/utilities.js';
 import { civilizations } from './utility/data.js';
+import http from "http";
+
+const port: number = Number(process.env.PORT) || 3000
+
+const server = http.createServer(function(_req, res) {
+
+    res.writeHead(200, { "content-type": "text/plain"});
+    res.end("Pong!");
+});
+
+server.listen(port, function() {
+
+})
+
 
 dotenv.config();
 
