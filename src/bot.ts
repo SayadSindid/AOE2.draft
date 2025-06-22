@@ -1,4 +1,4 @@
-import 'dotenv/config'
+import dotenv from "dotenv";
 import { Client, Events, GatewayIntentBits, InteractionCollector } from "discord.js";
 import { embed } from "./utility/embeds.js";
 import { buttonStatePage } from './utility/buttons.js';
@@ -6,6 +6,7 @@ import type { DraftSelection, PageNumber } from './index.js';
 import { embedInitialState, embedReload, messageEdit, pageChange } from './utility/utilities.js';
 import { civilizations } from './utility/data.js';
 
+dotenv.config();
 
 console.log("Bot is starting...");
 

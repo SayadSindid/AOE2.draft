@@ -27,7 +27,8 @@ export function pageChange(page:PageNumber, dir: ArrowDir): PageNumber {
         } else if (page === 2) {
             return 1;
         } else {
-            throw error;        }
+            throw error;
+        }
     }
     throw error;
 }
