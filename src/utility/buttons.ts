@@ -20,20 +20,22 @@ const nextButton = new ButtonBuilder()
 function createAllButtonsCiv(buttonToDisable: string = "") {
 
     let arr = []
+    //sort by alphabetical order
+    const sortedCivlizations = civilizations.sort()
 
-    for (let i = 0; i < civilizations.length; i++) {
+    for (let i = 0; i < sortedCivlizations.length; i++) {
         // CHeck if a civ is among banned or picked civ 
-        if (bannedOrPickedCivString.includes(civilizations[i])) {
+        if (bannedOrPickedCivString.includes(sortedCivlizations[i])) {
             continue;
         }
         let newButtonComponent = new ButtonBuilder()
-            .setCustomId(civilizations[i])
-            .setLabel(civilizations[i])
+            .setCustomId(sortedCivlizations[i])
+            .setLabel(sortedCivlizations[i])
             .setStyle(ButtonStyle.Secondary)
             arr.push(newButtonComponent)
         // Disable the selectioned civ button and store it's name for checking purpose
-        if (buttonToDisable === civilizations[i]) {
-            bannedOrPickedCivString.push(civilizations[i])
+        if (buttonToDisable === sortedCivlizations[i]) {
+            bannedOrPickedCivString.push(sortedCivlizations[i])
         }
     }
 
@@ -67,9 +69,7 @@ export function buttonStatePage(pageNumber: PageNumber, buttonToDisable: string 
         ]
         
     } else if (pageNumber === 2) {
-        return [...createAllRowsCiv(createAllButtonsCiv(buttonToDisable)).slice(5,9), createNewRow(previousButton, nextButton)]
-    } else if (pageNumber === 3) {
-        return [...createAllRowsCiv(createAllButtonsCiv(buttonToDisable)).slice(10), createNewRow(previousButton)]
+        return [...createAllRowsCiv(createAllButtonsCiv(buttonToDisable)).slice(5,9), createNewRow(previousButton)]
     } else {
         throw new Error("Unrecognized page number");
     }

@@ -7,8 +7,8 @@ import { embedInitialState, embedReload, messageEdit, pageChange } from './utili
 import { civilizations } from './utility/data.js';
 import http from "http";
 
+// Server stuff
 const port: number = Number(process.env.PORT) || 3000
-
 const server = http.createServer(function(_req, res) {
 
     res.writeHead(200, { "content-type": "text/plain"});
@@ -87,7 +87,7 @@ client.on("messageCreate", async function(msg) {
             collector = interaction.channel.createMessageComponentCollector({time: 999999999});
             
             collector.on("collect", async function(obj) {
-                obj.deferUpdate();
+                await obj.deferUpdate();
                 if (obj.user.id !== msg.author.id) {
                     return await obj.reply({content: "This draft isn't made by you", ephemeral: true})
                 }
@@ -144,6 +144,10 @@ client.on("messageCreate", async function(msg) {
         msg.reply("noob")
     } else if (msg.content === "!draftstop") {
         // Stop the collector in order to not have some interactions problem.
+        if (!isDraftActive) {
+            msg.reply("There is no draft ongoing.\n You can type !draft to launch one.")
+            return;
+        } 
         collector.stop();
         msg.reply("The draft has been stopped\n You can type !draft to launch a new one.")
         resetAllValues();

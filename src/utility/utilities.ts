@@ -16,15 +16,11 @@ export function pageChange(page:PageNumber, dir: ArrowDir): PageNumber {
     if (dir === "Next") {
         if (page === 1) {
             return 2;
-        } else if (page === 2) {
-            return 3;
         } else {
             throw error;
         }
     } else if (dir === "Previous") {
-        if (page === 3) {
-            return 2;
-        } else if (page === 2) {
+        if (page === 2) {
             return 1;
         } else {
             throw error;

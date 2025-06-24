@@ -28,7 +28,6 @@ export const civilizations = [
     // The Forgotten
     "Hongrois",
     "Incas",
-    "Indiens",
     "Italiens",
     "Slaves",
 
@@ -64,9 +63,6 @@ export const civilizations = [
     "Gurjaras",
     "Hindoustanis",
 
-    // Return of Rome
-    "Romains",
-
     // The Mountain Royals
     "Arméniens",
     "Géorgiens",
@@ -77,11 +73,6 @@ export const civilizations = [
     "Shu",
     "Wei",
     "Wu",
-
-    // Battle for greece
-    "Achéménides",
-    "Athéniens",
-    "Spartiates"
 ];
 
 export let bannedOrPickedCivString: string[] = [];
