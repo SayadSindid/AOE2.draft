@@ -1,7 +1,8 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { civilizations, bannedOrPickedCivString } from "./data.js";
+import { sortedCivlizations } from "./data.js";
 import type { PageNumber } from "../index.js";
 import { createNewRow } from "./utilities.js";
+import { bannedOrPickedCivString } from "../bot.js";
 
 
 const previousButton = new ButtonBuilder()
@@ -21,7 +22,6 @@ function createAllButtonsCiv(buttonToDisable: string = "") {
 
     let arr = []
     //sort by alphabetical order
-    const sortedCivlizations = civilizations.sort()
 
     for (let i = 0; i < sortedCivlizations.length; i++) {
         // CHeck if a civ is among banned or picked civ 

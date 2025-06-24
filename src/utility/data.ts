@@ -8,7 +8,7 @@ export const civilizations = [
     "Byzantins",
     "Celtes",
     "Chinois",
-    "Frans",
+    "Francs",
     "Goths",
     "Japonais",
     "Mongols",
@@ -75,4 +75,4 @@ export const civilizations = [
     "Wu",
 ];
 
-export let bannedOrPickedCivString: string[] = [];
+export const sortedCivlizations = civilizations.sort()

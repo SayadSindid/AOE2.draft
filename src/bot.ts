@@ -66,6 +66,10 @@ export let draftSelection: DraftSelection = {
 let currentPageNumber: PageNumber = 1;
 // Intializing the collector in global scope for the purpose of stopping the draft
 let collector: InteractionCollector<any>;
+
+export let bannedOrPickedCivString: string[] = [];
+
+
 // When the client is ready, run this code (only once).
 client.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
@@ -87,9 +91,11 @@ client.on("messageCreate", async function(msg) {
             collector = interaction.channel.createMessageComponentCollector({time: 999999999});
             
             collector.on("collect", async function(obj) {
+                try {
+
                 await obj.deferUpdate();
                 if (obj.user.id !== msg.author.id) {
-                    return await obj.reply({content: "This draft isn't made by you", ephemeral: true})
+                    await msg.reply({content: "This draft isn't made by you"})
                 }
 
                 if (obj.customId === "Next" || obj.customId === "Previous") {
@@ -99,7 +105,7 @@ client.on("messageCreate", async function(msg) {
                     } else {
                         currentPageNumber = pageChange(currentPageNumber, "Previous");
                     }
-                    await messageEdit(obj.message, currentPageNumber, embed)
+                    return await messageEdit(obj.message, currentPageNumber, embed)
                 }
                 // Button = A civ
                 if (civilizations.includes(obj.customId)) {
@@ -138,12 +144,17 @@ client.on("messageCreate", async function(msg) {
                         }
                     }
                 }
+                } catch (error) {
+                    console.log(error);
+                    return;
+                }
             })
         }
     } else if (msg.content === "!gg") {
         msg.reply("noob")
     } else if (msg.content === "!draftstop") {
         // Stop the collector in order to not have some interactions problem.
+        // FIXME: Strange bug, if a user start a draft and after make draft stop it will go show the there is no draft ongoing message.
         if (!isDraftActive) {
             msg.reply("There is no draft ongoing.\n You can type !draft to launch one.")
             return;
@@ -152,6 +163,7 @@ client.on("messageCreate", async function(msg) {
         msg.reply("The draft has been stopped\n You can type !draft to launch a new one.")
         resetAllValues();
     }
+    return;
 })
 
 // State reset of the draft
@@ -165,6 +177,7 @@ function resetAllValues(): void {
     isDraftActive = false;
     embed.spliceFields(0, embed.length - 1)
     embedInitialState(embed);
+    bannedOrPickedCivString = [];
     
     return;
 }
