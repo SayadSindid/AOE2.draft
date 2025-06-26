@@ -75,4 +75,4 @@ export const civilizations = [
     "Wu",
 ];
 
-export const sortedCivlizations = civilizations.sort()
+export const sortedCivlizations = civilizations.sort((a, b) => a.localeCompare(b))

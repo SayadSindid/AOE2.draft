@@ -58,19 +58,38 @@ function createAllRowsCiv(buttons: ButtonBuilder[]) {
     return arr;
 }
 
-// FIXME: Find a solution, when deleting multiples buttons the last page will be empty.
 export function buttonStatePage(pageNumber: PageNumber, buttonToDisable: string = "") {
 
-    if (pageNumber === 1) {
-        return [
-            // It's a bit disgusting but I don't have much choice if I wanna change the state of a button to disabled
-            // Create all buttons -> Create all row for the buttons -> Split and spread the first 4 Row => make a new row with the prev button
-            ...createAllRowsCiv(createAllButtonsCiv(buttonToDisable)).slice(0,4), createNewRow(nextButton)
-        ]
+    let allCivRows = [...createAllRowsCiv(createAllButtonsCiv(buttonToDisable))];
+    let numberOfRowsToBeShown = allCivRows.length;
+    const itemsPerPage = 4;
+    let pageNeeded = Math.ceil(numberOfRowsToBeShown / itemsPerPage);
+
+    // Handling if the user is in the last page and only 1 civ is remaining in it.
+    if (pageNumber > pageNeeded) {
+        pageNumber = pageNeeded as PageNumber;
+    }
+    
+    return [
+        ...allCivRows.slice(itemsPerPage * (pageNumber - 1), itemsPerPage * pageNumber),
+        // Page 3 won't be shown because at some point pageNeeded will become 2 and the next button won't appear anymore
+        navButtonCreation(pageNeeded, pageNumber)
+    ];
+
+
+    function navButtonCreation(finalPage: number, pageNumber: PageNumber) {
+
+        let arr = [];
+
+        if (pageNumber > 1) {
+            arr.push(previousButton)
+        // All pages which are not the final page
+        } 
         
-    } else if (pageNumber === 2) {
-        return [...createAllRowsCiv(createAllButtonsCiv(buttonToDisable)).slice(5,9), createNewRow(previousButton)]
-    } else {
-        throw new Error("Unrecognized page number");
+        if (pageNumber < finalPage) {
+            arr.push(nextButton)
+        }
+
+        return createNewRow(...arr);
     }
 }
