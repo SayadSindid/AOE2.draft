@@ -1,11 +1,12 @@
 import dotenv from "dotenv";
-import { Client, Events, GatewayIntentBits, InteractionCollector } from "discord.js";
+import { Client, Events, GatewayIntentBits, InteractionCollector, REST, Routes } from "discord.js";
 import { embed } from "./utility/embeds.js";
 import { buttonStatePage } from './utility/buttons.js';
 import type { DraftSelection, PageNumber } from './index.js';
 import { embedInitialState, embedReload, messageEdit, pageChange } from './utility/utilities.js';
 import { civilizations } from './utility/data.js';
 import http from "http";
+import { slashCommand } from "./utility/commands.js";
 
 // Server stuff
 const port: number = Number(process.env.PORT) || 3000
@@ -69,13 +70,33 @@ let collector: InteractionCollector<any>;
 
 export let bannedOrPickedCivString: string[] = [];
 
+const clientId = "1384919923054350456";
+let guildId = "";
+// Slash command list
+const commands = [slashCommand];
+
+// FIXME: Check if this is fine in order to get the guildId
+// I don't think it work since it's server join. Need to investigate
+client.on("guildCreate", async function (interaction) {
+    guildId = interaction.id;
+    // API stuff for registering the slash commands
+    const rest = new REST({version: "9"}).setToken(process.env.DISCORD_TOKEN!);
+
+    await rest.put(
+        Routes.applicationGuildCommands(clientId, guildId),
+        { body: commands },
+    )
+
+    return;
+})
+
 
 // When the client is ready, run this code (only once).
 client.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 });
 
-client.on("messageCreate", async function(msg) {
+client.on("messageCreate", async function (msg) {
     if (msg.content === "!draft") {
         if(isDraftActive) {
             msg.reply("A draft is already launched.\n Please either finish it or abandon it.")
@@ -90,7 +111,7 @@ client.on("messageCreate", async function(msg) {
             // The collector is like a data structure that stock all the informations related to the interaction with the interactive components
             collector = interaction.channel.createMessageComponentCollector({time: 999999999});
             
-            collector.on("collect", async function(obj) {
+            collector.on("collect", async function (obj) {
                 try {
 
                 await obj.deferUpdate();
@@ -154,7 +175,6 @@ client.on("messageCreate", async function(msg) {
         msg.reply("noob")
     } else if (msg.content === "!draftstop") {
         // Stop the collector in order to not have some interactions problem.
-        // FIXME: Strange bug, if a user start a draft and after make draft stop it will go show the there is no draft ongoing message.
         if (!isDraftActive) {
             msg.reply("There is no draft ongoing.\n You can type !draft to launch one.")
             return;
@@ -164,6 +184,34 @@ client.on("messageCreate", async function(msg) {
         resetAllValues();
     }
     return;
+})
+
+// Score slash command handling
+client.on("interactionCreate", async function (interaction) {
+    if (!interaction.isChatInputCommand()) {
+        console.log(interaction);
+        return;
+    } else {
+        
+        if (interaction.commandName = "draft") {
+            const subCommand = interaction.options;
+            const subCommandName = interaction.options.getSubcommand()
+            // TODO: to finish
+            if (subCommandName === "add_score") {
+                const winnerName = subCommand.getString("winner")
+                const loserName = subCommand.getString("loser")
+                const winnerScore = subCommand.getNumber("score_winner")
+                const loserScore = subCommand.getNumber("score_loser")
+            } else if (subCommandName === "add_bo") {
+                const winnerNameBO = subCommand.getString("winner")
+                const loserNameBO = subCommand.getString("loser")
+                const winnerScoreBO = subCommand.getNumber("score_winner")
+                const loserScoreBO = subCommand.getNumber("score_loser")
+            } else {
+                await interaction.reply("This command is unrecognized.")
+            }
+        }
+    }
 })
 
 // State reset of the draft
