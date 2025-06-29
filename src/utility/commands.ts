@@ -8,16 +8,16 @@ export const slashCommand = new SlashCommandBuilder()
         .addSubcommand((subcommand) => 
             subcommand
         .setName("add_score")
-        .setDescription("Add to the overall score of 2 player.")
+        .setDescription("Add to the overall score of 2 players.")
 
             // String name winner + looser
-            .addStringOption((opti) =>
+            .addUserOption((opti) =>
                 opti
             .setName("winner")
             .setDescription("Select the winner")
             .setRequired(true)
             )
-            .addStringOption((opti) =>
+            .addUserOption((opti) =>
                 opti
             .setName("loser")
             .setDescription("Select the loser")
@@ -46,16 +46,16 @@ export const slashCommand = new SlashCommandBuilder()
         .addSubcommand((subcommand) =>
             subcommand
         .setName("add_bo")
-        .setDescription("Add to the overall BO score of 2 player")
+        .setDescription("Add to the overall BO score of 2 players.")
 
             // String name winner + looser
-            .addStringOption((opti) =>
+            .addUserOption((opti) =>
                 opti
             .setName("winner")
             .setDescription("Select the winner")
             .setRequired(true)
             )
-            .addStringOption((opti) =>
+            .addUserOption((opti) =>
                 opti
             .setName("loser")
             .setDescription("Select the loser")
@@ -76,3 +76,22 @@ export const slashCommand = new SlashCommandBuilder()
             .setRequired(true)
             )
         )
+        
+
+        .addSubcommand((subcommand) =>
+            subcommand
+        .setName("get_score")
+        .setDescription("Show the current score of 2 players.")
+
+            .addUserOption((opti) =>
+                opti
+            .setName("player_1")
+            .setDescription("Select a Player")
+            .setRequired(true))
+
+            .addUserOption((opti) =>
+                opti
+            .setName("player_2")
+            .setDescription("Select a Player")
+            .setRequired(true))
+    )

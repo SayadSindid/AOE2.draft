@@ -216,3 +216,7 @@ PICKS
       .setTimestamp();
     
 }
+
+export function constructStringDBValues(playersScoreObject: object): string {
+    
+}

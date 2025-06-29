@@ -7,6 +7,9 @@ import { embedInitialState, embedReload, messageEdit, pageChange } from './utili
 import { civilizations } from './utility/data.js';
 import http from "http";
 import { slashCommand } from "./utility/commands.js";
+import { clientDB, connectToDB, updateScoresDB } from "./database/db.js";
+
+dotenv.config();
 
 // Server stuff
 const port: number = Number(process.env.PORT) || 3000
@@ -21,7 +24,6 @@ server.listen(port, function() {
 })
 
 
-dotenv.config();
 
 console.log("Bot is starting...");
 
@@ -77,8 +79,9 @@ const commands = [slashCommand];
 
 // FIXME: Check if this is fine in order to get the guildId
 // I don't think it work since it's server join. Need to investigate
-client.on("guildCreate", async function (interaction) {
-    guildId = interaction.id;
+// client.on("guildCreate", async function (interaction) {
+//     guildId = interaction.id;
+    guildId = "872506296828567582"
     // API stuff for registering the slash commands
     const rest = new REST({version: "9"}).setToken(process.env.DISCORD_TOKEN!);
 
@@ -87,8 +90,8 @@ client.on("guildCreate", async function (interaction) {
         { body: commands },
     )
 
-    return;
-})
+    // return;
+// })
 
 
 // When the client is ready, run this code (only once).
@@ -161,59 +164,97 @@ client.on("messageCreate", async function (msg) {
                             await messageEdit(obj.message, currentPageNumber, embed, obj.customId, false)
                             resetAllValues();
                             collector.stop()
-                            return;
+                            return null;
                         }
                     }
                 }
                 } catch (error) {
                     console.log(error);
-                    return;
+                    return null;
                 }
             })
         }
     } else if (msg.content === "!gg") {
-        msg.reply("noob")
+        await msg.reply("noob")
     } else if (msg.content === "!draftstop") {
         // Stop the collector in order to not have some interactions problem.
         if (!isDraftActive) {
             msg.reply("There is no draft ongoing.\n You can type !draft to launch one.")
-            return;
+            return null;
         } 
         collector.stop();
         msg.reply("The draft has been stopped\n You can type !draft to launch a new one.")
         resetAllValues();
     }
-    return;
+    return null;
 })
 
 // Score slash command handling
 client.on("interactionCreate", async function (interaction) {
     if (!interaction.isChatInputCommand()) {
         console.log(interaction);
-        return;
+        return null;
     } else {
-        
-        if (interaction.commandName = "draft") {
-            const subCommand = interaction.options;
-            const subCommandName = interaction.options.getSubcommand()
-            // TODO: to finish
-            if (subCommandName === "add_score") {
-                const winnerName = subCommand.getString("winner")
-                const loserName = subCommand.getString("loser")
-                const winnerScore = subCommand.getNumber("score_winner")
-                const loserScore = subCommand.getNumber("score_loser")
-            } else if (subCommandName === "add_bo") {
-                const winnerNameBO = subCommand.getString("winner")
-                const loserNameBO = subCommand.getString("loser")
-                const winnerScoreBO = subCommand.getNumber("score_winner")
-                const loserScoreBO = subCommand.getNumber("score_loser")
-            } else {
-                await interaction.reply("This command is unrecognized.")
+        try {
+            if (interaction.commandName = "draft") {
+                const subCommand = interaction.options;
+                const subCommandName = interaction.options.getSubcommand();
+                // TODO: to finish
+                if (subCommandName === "add_score") {
+                    const winnerNameOverall = subCommand.getUser("winner")?.username;
+                    const loserNameOverall = subCommand.getUser("loser")?.username;
+                    if (!winnerNameOverall || !loserNameOverall) {
+                        await interaction.reply("The user is unrecognzied, please enter a valid user");
+                        return null;
+                    } else if (winnerNameOverall === loserNameOverall) {
+                        await interaction.reply("Both names are the same, please enter valid users.")
+                    } else {
+                    const winnerScoreOverall = subCommand.getNumber("score_winner");
+                    const loserScoreOverall = subCommand.getNumber("score_loser");
+                    //FIXME: DB part
+                    await connectToDB(clientDB);
+
+
+                    await interaction.reply(`${winnerNameOverall} + ${winnerScoreOverall} score overall\n${loserNameOverall} + ${loserScoreOverall} score overall
+                                            \n**Overall score**: ${winnerNameOverall}: UpdatedDBOverallScoreWinner\n${loserNameOverall}: UpdatedDBOverallScoreLoser`);
+                    return null;
+                    }
+                } else if (subCommandName === "add_bo") {
+                    const winnerNameBO = subCommand.getUser("winner")?.username;
+                    const loserNameBO = subCommand.getUser("loser")?.username;
+                    if (!winnerNameBO || !loserNameBO) {
+                        await interaction.reply("Users are unrecognzied, please enter a valid users.");
+                        return null;
+                    } else if (winnerNameBO === loserNameBO) {
+                        await interaction.reply("Both names are the same, please enter valid users.")
+                    } else {
+                    const winnerScoreBO = subCommand.getNumber("score_winner");
+                    const loserScoreBO = subCommand.getNumber("score_loser");
+                    //FIXME: DB part, thing is the callback is passed but since It has argument. It run first and only after it runned it is passed.
+                    // What I need is for it to not be passed then having the function doing his thing then when the function is at the point
+                    // when the callback need to be run it run with the arguement I prescribed
+                    // But also what If while it run parameters values of the callback has been changed. anyway need to fix this
+                    await connectToDB(clientDB, updateScoresDB("BO", winnerNameBO, loserNameBO, winnerNameBO, loserScoreBO, winnerScoreBO));
+                    await interaction.reply(`${winnerNameBO} + ${winnerScoreBO} score BO\n${loserNameBO} + ${loserScoreBO} score BO 
+                        \n**BO win**: \n${winnerNameBO}: UpdatedDBOverallScoreWinner\n${loserNameBO}: UpdatedDBOverallScoreLoser`);
+                    return null;
+                    }
+                } else if (subCommandName === "get_score")  {
+                    const playerOneName = subCommand.getUser("Player_1");
+                    const playerTwoName = subCommand.getUser("Player_2")
+                    // TODO: Get values from DB and show
+                } else {
+                    await interaction.reply("This command is unrecognized.");
+                    return null;
+                }
             }
+        } catch  (error) {
+            console.log(error)
+            await interaction.reply("Something went wrong, please re-do the command.");
+            return null;            
         }
     }
 })
-
 // State reset of the draft
 function resetAllValues(): void {
     
