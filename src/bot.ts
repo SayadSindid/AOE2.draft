@@ -1,13 +1,12 @@
 import dotenv from "dotenv";
-import { Client, Events, GatewayIntentBits, InteractionCollector, REST, Routes } from "discord.js";
+import { Client, Events, GatewayIntentBits, InteractionCollector } from "discord.js";
 import { embed } from "./utility/embeds.js";
 import { buttonStatePage } from './utility/buttons.js';
 import type { DraftSelection, PageNumber } from './index.js';
 import { embedInitialState, embedReload, messageEdit, pageChange } from './utility/utilities.js';
 import { civilizations } from './utility/data.js';
 import http from "http";
-import { slashCommand } from "./utility/commands.js";
-import { clientDB, connectToDB, updateScoresDB } from "./database/db.js";
+import { connectToDB, getValuesFromDB, IntializeSlashCommand, updateScoresDB } from "./database/db.js";
 
 dotenv.config();
 
@@ -23,12 +22,12 @@ server.listen(port, function() {
 
 })
 
-
+let guildInitialized = false;
 
 console.log("Bot is starting...");
 
 // Create a new client instance
-const client = new Client({ intents: [
+export const client = new Client({ intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildMembers,
@@ -72,31 +71,12 @@ let collector: InteractionCollector<any>;
 
 export let bannedOrPickedCivString: string[] = [];
 
-const clientId = "1384919923054350456";
-let guildId = "";
-// Slash command list
-const commands = [slashCommand];
-
-// FIXME: Check if this is fine in order to get the guildId
-// I don't think it work since it's server join. Need to investigate
-// client.on("guildCreate", async function (interaction) {
-//     guildId = interaction.id;
-    guildId = "872506296828567582"
-    // API stuff for registering the slash commands
-    const rest = new REST({version: "9"}).setToken(process.env.DISCORD_TOKEN!);
-
-    await rest.put(
-        Routes.applicationGuildCommands(clientId, guildId),
-        { body: commands },
-    )
-
-    // return;
-// })
-
 
 // When the client is ready, run this code (only once).
-client.once(Events.ClientReady, readyClient => {
+client.once(Events.ClientReady, async function (readyClient) {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+    // Initialize slash command for every server the bot has in the cache
+    client.guilds.cache.forEach((g) => IntializeSlashCommand(g.id));
 });
 
 client.on("messageCreate", async function (msg) {
@@ -176,6 +156,7 @@ client.on("messageCreate", async function (msg) {
         }
     } else if (msg.content === "!gg") {
         await msg.reply("noob")
+        return null;
     } else if (msg.content === "!draftstop") {
         // Stop the collector in order to not have some interactions problem.
         if (!isDraftActive) {
@@ -199,10 +180,10 @@ client.on("interactionCreate", async function (interaction) {
             if (interaction.commandName = "draft") {
                 const subCommand = interaction.options;
                 const subCommandName = interaction.options.getSubcommand();
-                // TODO: to finish
                 if (subCommandName === "add_score") {
                     const winnerNameOverall = subCommand.getUser("winner")?.username;
                     const loserNameOverall = subCommand.getUser("loser")?.username;
+                    // FIXME: All these block could be fetched into a single one with a function or smth
                     if (!winnerNameOverall || !loserNameOverall) {
                         await interaction.reply("The user is unrecognzied, please enter a valid user");
                         return null;
@@ -211,38 +192,43 @@ client.on("interactionCreate", async function (interaction) {
                     } else {
                     const winnerScoreOverall = subCommand.getNumber("score_winner");
                     const loserScoreOverall = subCommand.getNumber("score_loser");
-                    //FIXME: DB part
-                    await connectToDB(clientDB);
-
-
-                    await interaction.reply(`${winnerNameOverall} + ${winnerScoreOverall} score overall\n${loserNameOverall} + ${loserScoreOverall} score overall
-                                            \n**Overall score**: ${winnerNameOverall}: UpdatedDBOverallScoreWinner\n${loserNameOverall}: UpdatedDBOverallScoreLoser`);
+                    await connectToDB(function () {return updateScoresDB("Overall", winnerNameOverall, loserNameOverall, winnerScoreOverall, loserScoreOverall)});
+                    await interaction.reply(`${winnerNameOverall} + ${winnerScoreOverall} score overall\n${loserNameOverall} + ${loserScoreOverall} score overall`);
                     return null;
                     }
                 } else if (subCommandName === "add_bo") {
                     const winnerNameBO = subCommand.getUser("winner")?.username;
                     const loserNameBO = subCommand.getUser("loser")?.username;
                     if (!winnerNameBO || !loserNameBO) {
-                        await interaction.reply("Users are unrecognzied, please enter a valid users.");
+                        await interaction.reply("Users are unrecognzied, please enter valid users.");
                         return null;
                     } else if (winnerNameBO === loserNameBO) {
                         await interaction.reply("Both names are the same, please enter valid users.")
                     } else {
                     const winnerScoreBO = subCommand.getNumber("score_winner");
                     const loserScoreBO = subCommand.getNumber("score_loser");
-                    //FIXME: DB part, thing is the callback is passed but since It has argument. It run first and only after it runned it is passed.
-                    // What I need is for it to not be passed then having the function doing his thing then when the function is at the point
-                    // when the callback need to be run it run with the arguement I prescribed
-                    // But also what If while it run parameters values of the callback has been changed. anyway need to fix this
-                    await connectToDB(clientDB, updateScoresDB("BO", winnerNameBO, loserNameBO, winnerNameBO, loserScoreBO, winnerScoreBO));
-                    await interaction.reply(`${winnerNameBO} + ${winnerScoreBO} score BO\n${loserNameBO} + ${loserScoreBO} score BO 
-                        \n**BO win**: \n${winnerNameBO}: UpdatedDBOverallScoreWinner\n${loserNameBO}: UpdatedDBOverallScoreLoser`);
+                    await connectToDB(function () {return updateScoresDB("BO", winnerNameBO, loserNameBO, winnerScoreBO, loserScoreBO)});
+                    await interaction.reply(`${winnerNameBO} + ${winnerScoreBO} score BO\n${loserNameBO} + ${loserScoreBO} score BO`);
                     return null;
                     }
                 } else if (subCommandName === "get_score")  {
-                    const playerOneName = subCommand.getUser("Player_1");
-                    const playerTwoName = subCommand.getUser("Player_2")
-                    // TODO: Get values from DB and show
+                    const playerOneName = subCommand.getUser("player_1")?.username;
+                    const playerTwoName = subCommand.getUser("player_2")?.username;
+                    if (!playerOneName || !playerTwoName) {
+                        await interaction.reply("Users are unrecognzied, please enter valid users.");
+                        return null;
+                    } else {
+                    try {
+                        const stringScores = await connectToDB(function() {return getValuesFromDB(playerOneName, playerTwoName)});
+                        if (!stringScores) {
+                            throw new Error("Problem when building the string.")
+                        }
+                        await interaction.reply(stringScores);
+                    } catch (error) {
+                        console.log(error)
+                        await interaction.reply("Couldn't find the users in the database")
+                    }
+                }
                 } else {
                     await interaction.reply("This command is unrecognized.");
                     return null;
@@ -274,6 +260,3 @@ function resetAllValues(): void {
 
 // Log in to Discord with your client's token
 client.login(process.env.DISCORD_TOKEN);
-
-
-

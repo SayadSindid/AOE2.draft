@@ -1,6 +1,7 @@
 import { ActionRowBuilder, ButtonBuilder, EmbedBuilder, Message } from "discord.js";
 import type { ArrowDir, DraftSelection, PageNumber, UnnaturalPattern } from "../index.js";
 import { buttonStatePage } from "./buttons.js";
+import type { Document, WithId } from "mongodb";
 
 // Helper function create new Actionrow
 export function createNewRow(...args: ButtonBuilder[]) {
@@ -217,6 +218,19 @@ PICKS
     
 }
 
-export function constructStringDBValues(playersScoreObject: object): string {
-    
+export function constructStringDBValues(playersScoreObject: WithId<Document>, playerOne: string, PlayerTwo: string): string {
+    try {
+        const scoreBOPlayerOne = playersScoreObject.BOScores[playerOne];
+        const scoreBOPlayerTwo = playersScoreObject.BOScores[PlayerTwo];
+        const scoreOverallPlayerOne = playersScoreObject.overallScores[playerOne];
+        const scoreOverallPlayerTwo = playersScoreObject.overallScores[PlayerTwo];
+        if (!scoreBOPlayerOne || !scoreBOPlayerTwo || !scoreOverallPlayerOne || !scoreOverallPlayerTwo) {
+            throw new Error("Problem parsing database");
+        }
+
+        return `**SCORES**\n\n**OVERALL**\n${playerOne}: ${scoreOverallPlayerOne}\n${PlayerTwo}: ${scoreOverallPlayerTwo}\n\n**BO WIN**\n${playerOne}: ${scoreBOPlayerOne}\n${PlayerTwo}: ${scoreBOPlayerTwo}`;
+    } catch (error) {
+        console.log(error)
+        throw error;
+    }
 }
