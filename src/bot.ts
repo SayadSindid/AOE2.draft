@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { Client, Events, GatewayIntentBits, InteractionCollector, MessageFlags } from "discord.js";
+import { Client, Events, GatewayIntentBits, InteractionCollector } from "discord.js";
 import { embed } from "./utility/embeds.js";
 import { buttonStatePage } from './utility/buttons.js';
 import type { DraftSelection, PageNumber } from './index.js';
