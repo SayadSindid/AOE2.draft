@@ -184,6 +184,7 @@ client.on("interactionCreate", async function (interaction) {
     } else {
         try {
             if (interaction.commandName = "draft") {
+                await interaction.deferReply();
                 const subCommand = interaction.options;
                 const subCommandName = interaction.options.getSubcommand();
                 if (subCommandName === "add_score") {
@@ -191,37 +192,37 @@ client.on("interactionCreate", async function (interaction) {
                     const loserNameOverall = subCommand.getUser("loser")?.username;
                     // FIXME: All these block could be fetched into a single one with a function or smth
                     if (!winnerNameOverall || !loserNameOverall) {
-                        await interaction.reply("The user is unrecognzied, please enter a valid user");
+                        await interaction.editReply("The user is unrecognzied, please enter a valid user");
                         return null;
                     } else if (winnerNameOverall === loserNameOverall) {
-                        await interaction.reply("Both names are the same, please enter valid users.")
+                        await interaction.editReply("Both names are the same, please enter valid users.")
                     } else {
                     const winnerScoreOverall = subCommand.getNumber("score_winner");
                     const loserScoreOverall = subCommand.getNumber("score_loser");
                     await connectToDB(function () {return updateScoresDB("Overall", winnerNameOverall, loserNameOverall, winnerScoreOverall, loserScoreOverall)});
-                    await interaction.reply(`${winnerNameOverall} + ${winnerScoreOverall} score overall\n${loserNameOverall} + ${loserScoreOverall} score overall`);
+                    await interaction.editReply(`${winnerNameOverall} + ${winnerScoreOverall} score overall\n${loserNameOverall} + ${loserScoreOverall} score overall`);
                     return null;
                     }
                 } else if (subCommandName === "add_bo") {
                     const winnerNameBO = subCommand.getUser("winner")?.username;
                     const loserNameBO = subCommand.getUser("loser")?.username;
                     if (!winnerNameBO || !loserNameBO) {
-                        await interaction.reply("Users are unrecognzied, please enter valid users.");
+                        await interaction.editReply("Users are unrecognzied, please enter valid users.");
                         return null;
                     } else if (winnerNameBO === loserNameBO) {
-                        await interaction.reply("Both names are the same, please enter valid users.")
+                        await interaction.editReply("Both names are the same, please enter valid users.")
                     } else {
                     const winnerScoreBO = subCommand.getNumber("score_winner");
                     const loserScoreBO = subCommand.getNumber("score_loser");
                     await connectToDB(function () {return updateScoresDB("BO", winnerNameBO, loserNameBO, winnerScoreBO, loserScoreBO)});
-                    await interaction.reply(`${winnerNameBO} + ${winnerScoreBO} score BO\n${loserNameBO} + ${loserScoreBO} score BO`);
+                    await interaction.editReply(`${winnerNameBO} + ${winnerScoreBO} score BO\n${loserNameBO} + ${loserScoreBO} score BO`);
                     return null;
                     }
                 } else if (subCommandName === "get_score")  {
                     const playerOneName = subCommand.getUser("player_1")?.username;
                     const playerTwoName = subCommand.getUser("player_2")?.username;
                     if (!playerOneName || !playerTwoName) {
-                        await interaction.reply("Users are unrecognzied, please enter valid users.");
+                        await interaction.editReply("Users are unrecognzied, please enter valid users.");
                         return null;
                     } else {
                     try {
@@ -229,20 +230,20 @@ client.on("interactionCreate", async function (interaction) {
                         if (!stringScores) {
                             throw new Error("Problem when building the string.")
                         }
-                        await interaction.reply(stringScores);
+                        await interaction.editReply(stringScores);
                     } catch (error) {
                         console.log(error)
-                        await interaction.reply("Couldn't find the users in the database")
+                        await interaction.editReply("Couldn't find the users in the database")
                     }
                 }
                 } else {
-                    await interaction.reply("This command is unrecognized.");
+                    await interaction.editReply("This command is unrecognized.");
                     return null;
                 }
             }
         } catch  (error) {
             console.log(error)
-            await interaction.reply("Something went wrong, please re-do the command.");
+            await interaction.editReply("Something went wrong, please re-do the command.");
             return null;            
         }
     }
