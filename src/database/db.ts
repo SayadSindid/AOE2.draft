@@ -28,16 +28,6 @@ const database = clientDB.db(dbName);
 const collection = database.collection(collectionName);
 
 export async function getValuesFromDB(nameWinner: string, nameLoser: string): Promise<string> {
-    
-    // Because discord allow you to have name ending with . and it cause problem with the mongoDB dot notation
-    if (nameWinner.includes(".")) {
-        nameWinner = nameWinner.replace(".", "")
-    }
-
-    if (nameLoser.includes(".")) {
-        nameLoser = nameLoser.replace(".", "");
-    }
-
 
     const idKey = alphabeticalIdKeyCreation(nameWinner, nameLoser);
     try {

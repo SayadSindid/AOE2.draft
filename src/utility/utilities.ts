@@ -219,7 +219,18 @@ PICKS
 }
 
 export function constructStringDBValues(playersScoreObject: WithId<Document>, playerOne: string, PlayerTwo: string): string {
+
+
     try {
+            // Because discord allow you to have name ending with . and it cause problem with the mongoDB dot notation
+            if (playerOne.includes(".")) {
+                playerOne = playerOne.replace(".", "")
+            }
+        
+            if (PlayerTwo.includes(".")) {
+                PlayerTwo = PlayerTwo.replace(".", "");
+            }
+    
         const scoreBOPlayerOne = playersScoreObject.BOScores[playerOne];
         const scoreBOPlayerTwo = playersScoreObject.BOScores[PlayerTwo];
         const scoreOverallPlayerOne = playersScoreObject.overallScores[playerOne];
