@@ -3,7 +3,6 @@ import { MongoClient, ServerApiVersion } from "mongodb";
 import { constructStringDBValues } from "../utility/utilities.js";
 import { REST, Routes } from "discord.js";
 import { slashCommand } from "../utility/commands.js";
-import { client } from "../bot.js";
 
 dotenv.config();
 
@@ -23,7 +22,7 @@ export const clientDB = new MongoClient(uriMongoDB, {
 // It is not necessary to check their existence mongoDB does it automatically
 const dbName = "AOE2_Draft_DB";
 // FIXME: Test collection, to fix when deploying
-const collectionName = "test_scores";
+const collectionName = "AOE2_Scores";
 
 const database = clientDB.db(dbName);
 const collection = database.collection(collectionName);
@@ -108,11 +107,12 @@ export async function IntializeSlashCommand(guildId: string | undefined) {
             Routes.applicationGuildCommands(clientId, guildId),
             { body: commands },
         )
+        
+        return;
 
     } catch (err) {
         throw err;
     }
-
 }
 
 function alphabeticalIdKeyCreation(nameOne: string, nameTwo: string): string {

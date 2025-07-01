@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { Client, Events, GatewayIntentBits, InteractionCollector } from "discord.js";
+import { Client, Events, GatewayIntentBits, InteractionCollector, MessageFlags } from "discord.js";
 import { embed } from "./utility/embeds.js";
 import { buttonStatePage } from './utility/buttons.js';
 import type { DraftSelection, PageNumber } from './index.js';
@@ -21,8 +21,6 @@ const server = http.createServer(function(_req, res) {
 server.listen(port, function() {
 
 })
-
-let guildInitialized = false;
 
 console.log("Bot is starting...");
 
@@ -76,7 +74,16 @@ export let bannedOrPickedCivString: string[] = [];
 client.once(Events.ClientReady, async function (readyClient) {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
     // Initialize slash command for every server the bot has in the cache
-    client.guilds.cache.forEach((g) => IntializeSlashCommand(g.id));
+    try {
+        const promises = client.guilds.cache.map((g) =>  IntializeSlashCommand(g.id));
+        await Promise.all(promises);
+
+        console.log("Registered slash commands for all guilds in cache.");
+        
+    } catch (err) {
+        console.log("Failed to register slash commands.",err);
+        return null;
+    }
 });
 
 client.on("messageCreate", async function (msg) {
@@ -99,17 +106,16 @@ client.on("messageCreate", async function (msg) {
 
                 await obj.deferUpdate();
                 if (obj.user.id !== msg.author.id) {
-                    await msg.reply({content: "This draft isn't made by you"})
+                    return null;
                 }
 
                 if (obj.customId === "Next" || obj.customId === "Previous") {
                     if (obj.customId === "Next") {
                         currentPageNumber = pageChange(currentPageNumber, "Next");
-                        
                     } else {
                         currentPageNumber = pageChange(currentPageNumber, "Previous");
                     }
-                    return await messageEdit(obj.message, currentPageNumber, embed)
+                    return await messageEdit(obj.message, currentPageNumber, embed);
                 }
                 // Button = A civ
                 if (civilizations.includes(obj.customId)) {
@@ -241,6 +247,7 @@ client.on("interactionCreate", async function (interaction) {
         }
     }
 })
+
 // State reset of the draft
 function resetAllValues(): void {
     
