@@ -50,6 +50,17 @@ export async function updateScoresDB(type: "BO" | "Overall", nameWinner: string,
     const query = { name: idKey };
     let update = {};
     const options = { upsert: true };
+
+    // Because discord allow you to have name ending with . and it cause problem with the mongoDB dot notation
+    if (nameWinner.includes(".")) {
+        nameWinner = nameWinner.replace(".", "")
+    }
+
+    if (nameLoser.includes(".")) {
+        nameLoser = nameLoser.replace(".", "");
+    }
+
+
     if (type === "BO") {
         // Increment value by the score dot notation enforced by mongoDB and computed property name necessary
         update = { $inc: {
